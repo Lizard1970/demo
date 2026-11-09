@@ -72,7 +72,7 @@ public class Controller {
     public Result<Object> addUser(@Valid @RequestBody User user){
         User newUser = userService.addUser(user);
         if (newUser != null){
-            return Result.success("新增成功："+newUser);
+            return Result.success("新增成功1："+newUser);
         }
         return Result.fail("新增失败!");
     }
