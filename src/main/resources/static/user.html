@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+<div class="max-w-6xl mx-auto bg-white rounded-lg shadow p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold">用户管理列表</h2>
+        <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">退出登录</button>
+    </div>
+
+    <!--筛选区域-->
+    <div class="flex flex-wrap gap-3 items-center mb-6">
+        <input id="searchName" placeholder="输入用户名搜索" class="border rounded px-3 py-2 w-48">
+        <select id="searchType" class="border rounded px-3 py-2">
+            <option value="">全部类型</option>
+            <option value="1">管理员</option>
+            <option value="2">普通用户</option>
+        </select>
+        <select id="sortField" class="border rounded px-3 py-2">
+            <option value="">默认排序</option>
+            <option value="createTime">按创建时间</option>
+            <option value="age">按年龄</option>
+        </select>
+        <select id="sortOrder" class="border rounded px-3 py-2">
+            <option value="desc">降序</option>
+            <option value="asc">升序</option>
+        </select>
+        <select id="pageSizeSel" class="border rounded px-3 py-2">
+            <option value="5">每页5条</option>
+            <option value="10" selected>每页10条</option>
+            <option value="20">每页20条</option>
+            <option value="50">每页50条</option>
+        </select>
+
+        <button onclick="loadList()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">查询</button>
+        <button onclick="resetSearch()" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">重置</button>
+        <button onclick="openForm()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">新增用户</button>
+    </div>
+
+    <table class="w-full border-collapse border border-gray-200">
+        <thead>
+        <tr class="bg-gray-50">
+            <th class="border p-2">ID</th>
+            <th class="border p-2">用户名</th>
+            <th class="border p-2">年龄</th>
+            <th class="border p-2">用户类型</th>
+            <th class="border p-2">创建时间</th>
+            <th class="border p-2">更新时间</th>
+            <th class="border p-2">操作</th>
+        </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+    </table>
+
+    <div id="pageBox" class="flex gap-2 mt-4 items-center">
+    </div>
+</div>
+
+<!--新增编辑弹窗-->
+<div id="formDialog" class="fixed inset-0 bg-black/50 hidden items-center justify-center">
+    <div class="bg-white p-6 rounded-lg w-96">
+        <h3 id="formTitle" class="text-lg font-bold mb-4">新增用户</h3>
+        <input type="hidden" id="editId">
+        <div class="mb-3">
+            <label>用户名</label>
+            <input id="formUsername" class="border w-full px-2 py-1 mt-1">
+        </div>
+        <div class="mb-3">
+            <label>密码（编辑不填则不修改）</label>
+            <input id="formPwd" type="password" class="border w-full px-2 py-1 mt-1">
+        </div>
+        <div class="mb-3">
+            <label>年龄</label>
+            <input id="formAge" class="border w-full px-2 py-1 mt-1">
+        </div>
+        <div class="mb-3">
+            <label>用户类型</label>
+            <select id="formUserType" class="border w-full px-2 py-1 mt-1">
+                <option value="0">管理员</option>
+                <option value="1">普通用户</option>
+                <option value="2">访客</option>
+            </select>
+        </div>
+        <div class="flex justify-end gap-3 mt-5">
+            <button onclick="closeForm()" class="border px-4 py-2 rounded">取消</button>
+            <button onclick="submitForm()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">提交</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let pageNum = 1;
+    let pageSize = 10;
+
+    //页面加载校验token
+    (function checkLogin(){
+        const token = localStorage.getItem("token");
+        if(!token){
+            location.href="/login.html";
+        }
+    })();
+
+    function loadList() {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            location.href = "/login.html";
+            return;
+        }
+        // 读取每页条数
+        const pageSize = Number(document.getElementById("pageSizeSel").value);
+        const sortField = document.getElementById("sortField").value;
+        const sortOrder = document.getElementById("sortOrder").value;
+        const username = document.getElementById("searchName").value.trim();
+        const userType = document.getElementById("searchType").value;
+
+        const params = new URLSearchParams();
+        params.append("pageNum", pageNum);
+        params.append("pageSize", pageSize);
+        if (username) params.append("username", username);
+        if (userType) params.append("userType", userType);
+        if (sortField) {
+            params.append("sortFile", sortField);
+            params.append("sortOrder", sortOrder);
+        }
+
+        fetch(`/user/page?${params.toString()}`, {
+            method: "GET",
+            headers: {
+                "Authorization": token
+            }
+        })
+            .then(res => res.json())
+            .then(res => {
+                if(res.code === 401){
+                    localStorage.removeItem("token");
+                    location.href="/login.html";
+                    return;
+                }
+                if (res.code !== 200) {
+                    alert(res.msg || "查询失败");
+                    return;
+                }
+                const pageData = res.data;
+                renderTable(pageData.records);
+                renderPagination(pageData.current, pageData.pages, pageData.total);
+            })
+            .catch(err => {
+                console.error(err);
+                alert("网络异常");
+            })
+    }
+
+
+    //渲染表格
+    function renderTable(list) {
+        const tbody = document.getElementById("tableBody");
+        tbody.innerHTML = "";
+        if (!list || list.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4">暂无数据</td></tr>`;
+            return;
+        }
+        list.forEach(item => {
+            const tr = document.createElement("tr");
+            tr.className = "hover:bg-gray-50";
+            tr.innerHTML = `
+      <td class="border p-2 text-center">${item.id}</td>
+      <td class="border p-2 text-center">${item.username}</td>
+      <td class="border p-2 text-center">${item.age}</td>
+      <td class="border p-2 text-center">${item.userType === 1 ? "管理员" : "普通用户"}</td>
+      <td class="border p-2 text-center">${item.createTime || "-"}</td>
+      <td class="border p-2 text-center">${item.updateTime || "-"}</td>
+      <td class="border p-2 text-center">
+        <button onclick="editItem(${item.id})" class="text-blue-500 mr-2">编辑</button>
+        <button onclick="delItem(${item.id})" class="text-red-500">删除</button>
+      </td>
+    `;
+            tbody.appendChild(tr);
+        })
+    }
+
+    //渲染分页
+    function renderPagination(current, pages, total) {
+        const box = document.getElementById("pageBox");
+        box.innerHTML = "";
+        if (pages <= 1) return;
+
+        if (current > 1) {
+            box.innerHTML += `<button onclick="changePage(${current - 1})" class="border px-3 py-1 rounded">上一页</button>`;
+        }
+        for (let i = 1; i <= pages; i++) {
+            if (i === current) {
+                box.innerHTML += `<span class="px-3 py-1 bg-blue-500 text-white rounded">${i}</span>`;
+            } else {
+                box.innerHTML += `<button onclick="changePage(${i})" class="border px-3 py-1 rounded">${i}</button>`;
+            }
+        }
+        if (current < pages) {
+            box.innerHTML += `<button onclick="changePage(${current + 1})" class="border px-3 py-1 rounded">下一页</button>`;
+        }
+        box.innerHTML += `<span class="ml-3 text-gray-600">共 ${total} 条</span>`;
+    }
+
+    function changePage(p) {
+        pageNum = p;
+        loadList();
+    }
+
+    //重置筛选
+    function resetSearch() {
+        document.getElementById("searchName").value = "";
+        document.getElementById("searchType").value = "";
+        document.getElementById("sortField").value = "";
+        document.getElementById("sortOrder").value = "desc";
+        pageNum = 1;
+        loadList();
+    }
+
+    //打开新增弹窗
+    function openForm() {
+        document.getElementById("formTitle").innerText = "新增用户";
+        document.getElementById("editId").value = "";
+        document.getElementById("formUsername").value = "";
+        document.getElementById("formPwd").value = "";
+        document.getElementById("formAge").value = "";
+        document.getElementById("formUserType").value = "1";
+        document.getElementById("formDialog").classList.remove("hidden");
+        document.getElementById("formDialog").classList.add("flex");
+    }
+
+    //编辑回显
+    function editItem(id) {
+        const token = localStorage.getItem("token");
+        fetch(`/user/${id}`, {
+            headers: { "Authorization": token }
+        })
+            .then(res => res.json())
+            .then(res => {
+                if(res.code ===401){
+                    localStorage.removeItem("token");
+                    location.href="/login.html";
+                    return;
+                }
+                if (res.code !== 200) {
+                    alert(res.msg);
+                    return;
+                }
+                const data = res.data;
+                document.getElementById("formTitle").innerText = "编辑用户";
+                document.getElementById("editId").value = data.id;
+                document.getElementById("formUsername").value = data.username;
+                document.getElementById("formPwd").value = "";
+                document.getElementById("formAge").value = data.age;
+                document.getElementById("formUserType").value = data.userType;
+                document.getElementById("formDialog").classList.remove("hidden");
+                document.getElementById("formDialog").classList.add("flex");
+            })
+    }
+
+    //关闭弹窗
+    function closeForm() {
+        document.getElementById("formDialog").classList.add("hidden");
+        document.getElementById("formDialog").classList.remove("flex");
+    }
+
+    //提交表单【重点路径：新增 /user/add，修改 /user/update】
+    function submitForm() {
+        const token = localStorage.getItem("token");
+        if(!token){
+            location.href="/login.html";
+            return;
+        }
+
+        const id = document.getElementById("editId").value;
+        const username = document.getElementById("formUsername").value.trim();
+        const pwd = document.getElementById("formPwd").value.trim();
+        const age = Number(document.getElementById("formAge").value);
+        const userType = Number(document.getElementById("formUserType").value);
+
+        if (!username) {
+            alert("用户名不能为空");
+            return;
+        }
+
+        let body = { username, age, userType };
+        if (pwd) body.password = pwd;
+
+        let url, method;
+        if (id) {
+            //修改
+            url = `/user/update`;
+            method = "PUT";
+            body.id = Number(id);
+        } else {
+            //新增
+            if (!pwd) {
+                alert("新增必须填写密码");
+                return;
+            }
+            url = `/user/add`;
+            method = "POST";
+        }
+
+        fetch(url, {
+            method,
+            headers: {
+                "Authorization": token,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+        })
+            .then(res => res.json())
+            .then(res => {
+                if(res.code ===401){
+                    localStorage.removeItem("token");
+                    location.href="/login.html";
+                    return;
+                }
+                alert(res.msg);
+                if (res.code === 200) {
+                    closeForm();
+                    loadList();
+                }
+            })
+    }
+
+    //删除 /user/del/{id}
+    function delItem(id) {
+        const token = localStorage.getItem("token");
+        if (!confirm("确定删除？")) return;
+        fetch(`/user/del/${id}`, {
+            method: "DELETE",
+            headers: { "Authorization": token }
+        })
+            .then(res => res.json())
+            .then(res => {
+                if(res.code ===401){
+                    localStorage.removeItem("token");
+                    location.href="/login.html";
+                    return;
+                }
+                alert(res.msg);
+                if (res.code === 200) loadList();
+            })
+    }
+
+    //退出登录
+    function logout() {
+        localStorage.removeItem("token");
+        location.href = "/login.html";
+    }
+
+    //页面初始化加载
+    loadList();
+</script>
+</body>
+</html>
