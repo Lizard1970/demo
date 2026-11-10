@@ -1,4 +1,7 @@
-.idea
 .git
 .gitignore
-target/!(*.jar)
+.idea
+*.md
+src
+mvnw
+mvnw.cmd
