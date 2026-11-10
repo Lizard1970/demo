@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        HARBOR_ADDR = "harbor-nfs:5000"
+        HARBOR_ADDR = "192.168.139.30:5000"
         HARBOR_REPO = "demo"
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         FULL_IMAGE = "${HARBOR_ADDR}/${HARBOR_REPO}:${IMAGE_TAG}"
