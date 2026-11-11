@@ -24,7 +24,7 @@ pipeline {
                 sh """
                 ssh root@${DOCKER_HOST} "
                 cd /root/demo &&
-                mvn clean package -DskipTests
+                JAVA_HOME=/opt/java/openjdk /opt/apache-maven-3.9.16/bin/mvn clean package -DskipTests
                 "
                 """
             }
@@ -44,6 +44,11 @@ pipeline {
         stage('部署K8s（ssh到master）') {
             steps {
                 sh """
+                # 先把仓库里的deployment.yaml传到master
+                ssh root@192.168.139.20 "mkdir -p /root/demo"
+                scp deployment.yaml root@192.168.139.20:/root/demo/
+
+                #替换镜像tag并部署
                 ssh root@192.168.139.20 "
                 cd /root/demo &&
                 sed -i 's#image:.*#image: ${FULL_IMAGE}#' deployment.yaml &&
