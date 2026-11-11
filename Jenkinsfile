@@ -8,15 +8,17 @@ pipeline {
         // 宿主机harbor-nfs
         DOCKER_HOST="192.168.139.30"
     }
-    stage('同步代码到harbor-nfs') {
-        steps {
-            sh '''
-                tar -czf - --exclude=.git -C . . | ssh root@192.168.139.30 "rm -rf /root/demo && mkdir -p /root/demo && tar -xzf - -C /root/demo"
-            '''
-        }
-    }
+
 
     stages {
+        stage('同步代码到harbor-nfs') {
+                steps {
+                    sh '''
+                        tar -czf - --exclude=.git -C . . | ssh root@192.168.139.30 "rm -rf /root/demo && mkdir -p /root/demo && tar -xzf - -C /root/demo"
+                    '''
+                }
+            }
+
         stage('Maven打包-JDK21（ssh到harbor-nfs执行）') {
             steps {
                 sh """
