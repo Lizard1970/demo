@@ -8,6 +8,14 @@ pipeline {
         // 宿主机harbor-nfs
         DOCKER_HOST="192.168.139.30"
     }
+    stage('同步代码到harbor-nfs') {
+        steps {
+            sh '''
+                tar -czf - --exclude=.git -C . . | ssh root@192.168.139.30 "rm -rf /root/demo && mkdir -p /root/demo && tar -xzf - -C /root/demo"
+            '''
+        }
+    }
+
     stages {
         stage('Maven打包-JDK21（ssh到harbor-nfs执行）') {
             steps {
@@ -34,7 +42,7 @@ pipeline {
         stage('部署K8s（ssh到master）') {
             steps {
                 sh """
-                ssh root@192.168.139.30 "
+                ssh root@192.168.139.20 "
                 cd /root/demo &&
                 sed -i 's#image:.*#image: ${FULL_IMAGE}#' deployment.yaml &&
                 kubectl apply -f deployment.yaml
