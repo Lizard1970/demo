@@ -2,45 +2,43 @@ pipeline {
     agent any
     environment {
         HARBOR_ADDR = "192.168.139.30:5000"
-        HARBOR_REPO = "demo"
-        IMAGE_TAG = "${env.BUILD_NUMBER}"
-        FULL_IMAGE = "${HARBOR_ADDR}/${HARBOR_REPO}:${IMAGE_TAG}"
+        IMAGE_REPO = "${HARBOR_ADDR}/demo/test"
+        TAG = "v${BUILD_NUMBER}"
+        FULL_IMAGE = "${IMAGE_REPO}:${TAG}"
     }
     stages {
-        stage('拉取代码') {
-            steps {
-                git url: 'https://github.com/Lizard1970/demo.git', branch: 'master'
-            }
-        }
-        stage('Maven打包') {
-            steps {
-                sh 'mvn clean package -DskipTests -Dmaven.test.skip=true'
-            }
-        }
-        stage('构建镜像+推送Harbor') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'harbor-auth', passwordVariable: 'HARBOR_PWD', usernameVariable: 'HARBOR_USER')]) {
-                    sh """
-                        docker login ${HARBOR_ADDR} -u ${HARBOR_USER} -p ${HARBOR_PWD}
-                        docker build -t ${FULL_IMAGE} .
-                        docker push ${FULL_IMAGE}
-                        docker logout ${HARBOR_ADDR}
-                    """
+        stage('Maven打包-JDK21') {
+            agent {
+                docker {
+                    image 'maven:3.9-eclipse-temurin-21'
+                    args '-v $HOME/.m2:/root/.m2 -v /etc/localtime:/etc/localtime'
                 }
             }
-        }
-        stage('部署K8s') {
             steps {
-                sh "kubectl set image deployment/demo-deploy demo=${FULL_IMAGE} -n default"
+                sh 'mvn clean package -DskipTests -s settings.xml'
+            }
+        }
+        stage('构建镜像并推送Harbor') {
+            steps {
+                sh """
+                docker login ${HARBOR_ADDR} -u admin -p Harbor@12345
+                docker build -t ${FULL_IMAGE} .
+                docker push ${FULL_IMAGE}
+                """
+            }
+        }
+        stage('部署到K8s') {
+            steps {
+                sh """
+                # 替换yaml里镜像tag，然后应用
+                sed -i 's#image:.*#image: ${FULL_IMAGE}#' deployment.yaml
+                kubectl apply -f deployment.yaml
+                """
             }
         }
     }
     post {
-        success {
-            echo "✅ 流水线成功，镜像：${FULL_IMAGE}"
-        }
-        failure {
-            echo "❌ 流水线执行失败"
-        }
+        success { echo "✅ CICD流水线全部成功，镜像：${FULL_IMAGE}" }
+        failure { echo "❌ 流水线失败！" }
     }
 }
