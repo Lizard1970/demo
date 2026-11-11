@@ -24,7 +24,7 @@ pipeline {
                 sh """
                 ssh root@${DOCKER_HOST} "
                 cd /root/demo &&
-                mvn clean package -DskipTests
+                JAVA_HOME=/opt/java/openjdk /opt/apache-maven-3.9.16/bin/mvn clean package -DskipTests
                 "
                 """
             }
