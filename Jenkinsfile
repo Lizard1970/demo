@@ -46,7 +46,7 @@ pipeline {
                 sh """
                 # 先把仓库里的deployment.yaml传到master
                 ssh root@192.168.139.20 "mkdir -p /root/demo"
-                scp deployment.yaml root@192.168.139.20:/root/demo/
+                scp deployment.yml root@192.168.139.20:/root/demo/
 
                 #替换镜像tag并部署
                 ssh root@192.168.139.20 "
