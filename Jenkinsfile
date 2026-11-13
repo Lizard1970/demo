@@ -51,8 +51,8 @@ pipeline {
                 #替换镜像tag并部署
                 ssh root@192.168.139.20 "
                 cd /root/demo &&
-                sed -i 's#image:.*#image: ${FULL_IMAGE}#' deployment.yaml &&
-                kubectl apply -f deployment.yaml
+                sed -i 's#image:.*#image: ${FULL_IMAGE}#' deployment.yml &&
+                kubectl apply -f deployment.yml
                 "
                 """
             }
