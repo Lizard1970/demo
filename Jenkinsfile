@@ -7,18 +7,16 @@ pipeline {
         FULL_IMAGE = "${IMAGE_REPO}:${TAG}"
         // 宿主机harbor-nfs
         DOCKER_HOST="192.168.139.30"
+        WECHAT_WEBHOOK = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=9f207fb3-8477-4a2e-a293-2f56e86b091b"
     }
-
-
     stages {
         stage('同步代码到harbor-nfs') {
-                steps {
-                    sh '''
-                        tar -czf - --exclude=.git -C . . | ssh root@192.168.139.30 "rm -rf /root/demo && mkdir -p /root/demo && tar -xzf - -C /root/demo"
-                    '''
-                }
+            steps {
+                sh '''
+                    tar -czf - --exclude=.git -C . . | ssh root@192.168.139.30 "rm -rf /root/demo && mkdir -p /root/demo && tar -xzf - -C /root/demo"
+                '''
             }
-
+        }
         stage('Maven打包-JDK21（ssh到harbor-nfs执行）') {
             steps {
                 sh """
@@ -47,7 +45,6 @@ pipeline {
                 # 先把仓库里的deployment.yaml传到master
                 ssh root@192.168.139.20 "mkdir -p /root/demo"
                 scp deployment.yml root@192.168.139.20:/root/demo/
-
                 #替换镜像tag并部署
                 ssh root@192.168.139.20 "
                 cd /root/demo &&
@@ -59,7 +56,31 @@ pipeline {
         }
     }
     post {
-        success { echo "✅ CICD流水线全部成功，镜像：${FULL_IMAGE}" }
-        failure { echo "❌ 流水线失败！" }
+        success {
+            echo "✅ CICD流水线全部成功，镜像：${FULL_IMAGE}"
+            sh """
+                curl ${WECHAT_WEBHOOK} \
+                -H "Content-Type: application/json" \
+                -d '{
+                    "msgtype": "markdown",
+                    "markdown": {
+                        "content": "✅ **demo应用发布成功**\n> 构建号：${BUILD_NUMBER}\n> 镜像地址：${FULL_IMAGE}\n> 任务地址：${BUILD_URL}"
+                    }
+                }'
+            """
+        }
+        failure {
+            echo "❌ 流水线失败！"
+            sh """
+                curl ${WECHAT_WEBHOOK} \
+                -H "Content-Type: application/json" \
+                -d '{
+                    "msgtype": "markdown",
+                    "markdown": {
+                        "content": "❌ **demo应用发布失败**\n> 构建号：${BUILD_NUMBER}\n> 镜像地址：${FULL_IMAGE}\n> 任务地址：${BUILD_URL}"
+                    }
+                }'
+            """
+        }
     }
 }
