@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: demo-app
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: demo
@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: demo
-          image: 192.168.139:5000/demo/test:v1
+          image: 192.168.139.30:5000/demo/test:v1
           ports:
           - containerPort: 8080
       imagePullSecrets:
