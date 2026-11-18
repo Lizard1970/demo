@@ -52,6 +52,7 @@ spec:
         backend:
           service:
             name: svc-lzt
+            namespace: default
             port:
               number: 8080
 
