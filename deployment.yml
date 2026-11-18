@@ -44,7 +44,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: lizard.local
+  - host: lark.local
     http:
       paths:
       - path: /
