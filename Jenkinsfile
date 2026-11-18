@@ -7,10 +7,6 @@ pipeline {
         FULL_IMAGE = "${IMAGE_REPO}:${TAG}"
         DOCKER_HOST = "192.168.139.30"
         WECHAT_WEBHOOK = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=9f207fb3-8477-4a2e-a293-2f56e86b091b"
-        // 从jenkins凭证读取harbor账号密码，不写明文
-        HARBOR_CREDS = credentials('harbor-cred')
-        HARBOR_USER = HARBOR_CREDS.split(':')[0]
-        HARBOR_PWD = HARBOR_CREDS.split(':')[1]
     }
     stages {
         stage('同步代码到harbor-nfs') {
@@ -36,16 +32,19 @@ pipeline {
 
         stage('构建&推送镜像到Harbor') {
             steps {
-                sh """
-                set -e
-                ssh root@${DOCKER_HOST} "
-                    cd /root/demo
-                    docker login ${HARBOR_ADDR} -u ${HARBOR_USER} -p ${HARBOR_PWD}
-                    docker build -t ${FULL_IMAGE} .
-                    docker push ${FULL_IMAGE}
-                    docker logout ${HARBOR_ADDR}
-                "
-                """
+                // 凭证ID：harbor-cred，类型 Username with password
+                withCredentials([usernamePassword(credentialsId: 'harbor-cred', passwordVariable: 'HPWD', usernameVariable: 'HUSER')]) {
+                    sh """
+                    set -e
+                    ssh root@${DOCKER_HOST} "
+                        cd /root/demo
+                        docker login ${HARBOR_ADDR} -u ${HUSER} -p ${HPWD}
+                        docker build -t ${FULL_IMAGE} .
+                        docker push ${FULL_IMAGE}
+                        docker logout ${HARBOR_ADDR}
+                    "
+                    """
+                }
             }
         }
 
@@ -55,12 +54,11 @@ pipeline {
                 set -e
                 ssh root@192.168.139.20 "
                     cd /root/demo
-                    # 精准替换deployment里容器镜像，只匹配spec.template.spec.containers[0].image
-                    # 用yq 【推荐】，如果集群没有yq，我给你sed版本在下面
-                    yq eval '.spec.template.spec.containers[0].image = "${FULL_IMAGE}"' -i all-in-one.yaml
+                    # 如果你没有装yq，就用下面这行sed，注释掉yq
+                    # yq eval '.spec.template.spec.containers[0].image = "${FULL_IMAGE}"' -i all-in-one.yaml
+                    sed -i "s#^\\s*image:.*#        image: ${FULL_IMAGE}#" all-in-one.yaml
                     kubectl apply -f all-in-one.yaml
-                    # 可选：等待pod就绪
-                    kubectl rollout status deployment/deployment-name -w --timeout=120s
+                    kubectl rollout status deployment/demo -w --timeout=120s
                 "
                 """
             }
@@ -74,13 +72,15 @@ pipeline {
 > 构建号：${BUILD_NUMBER}
 > 镜像地址：${FULL_IMAGE}
 > 任务地址：${BUILD_URL}"""
+                // 转义换行和双引号
+                def jsonMsg = msg.replace('"','\\"').replace('\n','\\n')
                 sh """
                 curl -s ${WECHAT_WEBHOOK} \
                 -H "Content-Type: application/json" \
                 -d '{
                     "msgtype": "markdown",
                     "markdown": {
-                        "content": ${msg.replace('"','\\"').replace('\n','\\n')}
+                        "content": "${jsonMsg}"
                     }
                 }'
                 """
@@ -92,13 +92,14 @@ pipeline {
 > 构建号：${BUILD_NUMBER}
 > 镜像地址：${FULL_IMAGE}
 > 任务地址：${BUILD_URL}"""
+                def jsonMsg = msg.replace('"','\\"').replace('\n','\\n')
                 sh """
                 curl -s ${WECHAT_WEBHOOK} \
                 -H "Content-Type: application/json" \
                 -d '{
                     "msgtype": "markdown",
                     "markdown": {
-                        "content": ${msg.replace('"','\\"').replace('\n','\\n')}
+                        "content": "${jsonMsg}"
                     }
                 }'
                 """
