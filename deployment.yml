@@ -34,3 +34,25 @@ spec:
     - port: 8080
       targetPort: 8080
       nodePort: 30081
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-demo
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+  - host: lizard.local
+    http:
+      paths:
+      - path: /
+      pathType: Prefix
+      backend:
+        service:
+          name: svc-lzt
+          port:
+            number: 8080
+
