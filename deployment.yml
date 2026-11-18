@@ -28,7 +28,7 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app: demo-test
+    app: demo-label
   ports:
     - port: 8080
       targetPort: 8080
