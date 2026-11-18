@@ -46,10 +46,10 @@ spec:
     http:
       paths:
       - path: /
-      pathType: Prefix
-      backend:
-        service:
-          name: svc-lzt
-          port:
-            number: 80
+        pathType: Prefix
+        backend:
+          service:
+            name: svc-lzt
+            port:
+              number: 8080
 
