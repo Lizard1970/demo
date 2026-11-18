@@ -42,6 +42,7 @@ metadata:
   name: ingress-demo
   namespace: demo-ns
 spec:
+  ingressClassName: nginx
   rules:
   - host: lizard.local
     http:
