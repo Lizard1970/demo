@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: demo-app
+  name: deployment-name
 spec:
-  replicas: 3
+  replicas: 4
   selector:
     matchLabels:
-      app: demo
+      app: demo-label
   template:
     metadata:
       labels:
-        app: demo
+        app: demo-label
     spec:
       containers:
-        - name: demo
+        - name: contain-name
           image: 192.168.139.30:5000/demo/test:v1
           ports:
           - containerPort: 8080
@@ -24,11 +24,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: demo-service
+  name: svc-lzt
 spec:
   type: NodePort
   selector:
-    app: demo
+    app: demo-test
   ports:
     - port: 8080
       targetPort: 8080
