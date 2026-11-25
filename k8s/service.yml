@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: svc-lzt
+  name: svc-lark
   namespace: demo-ns
 spec:
   type: NodePort
