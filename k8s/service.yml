@@ -1,13 +1,26 @@
+#api版本，service资源归属核心v1 API组
 apiVersion: v1
+#资源类型：service,为一组pod提供统一的入口和负载均衡
 kind: Service
+#元数据：资源标识信息
 metadata:
+  #service资源名字，同命名空间内唯一，也是集群内部DNS域名，如 svc-lark:8080
   name: svc-lark
+  #所属命名空间，必须和后端pod再通一个ns才能用段名字互相访问
   namespace: demo-ns
+#期望状态，定义流量如何转发到后端pod
 spec:
+  #服务类型，NodePort：在每个node节点开一个端口，集群外部可通过node节点IP:nodePort 访问
   type: NodePort
+  #标签选择器，svc用来动态匹配后端的pod
   selector:
+    #标签键值，必须和deployment里pod的模板名字一致
     app: demo-label
+  #端口映射列表
   ports:
+      #service监听端口，service流量入口
     - port: 8080
+      #后端pod容器监听端口，流量最终打到容器这个端口，和containerPort一致
       targetPort: 8080
+      #node节点暴露端口，范围30000-32767，集群全局唯一
       nodePort: 30082

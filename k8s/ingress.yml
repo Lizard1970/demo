@@ -1,19 +1,33 @@
+# api版本，Ingress资源归属networking.k8s.io/v1 API组
 apiVersion: networking.k8s.io/v1
+#资源类型：Ingress，七层HTTP路由，基于域名、路径转发流量到Service
 kind: Ingress
+#元数据：资源标识信息
 metadata:
+  #ingress资源信息，同一ns下唯一
   name: ingress-demo
+  #所属ns,要与后端service一致
   namespace: demo-ns
+#期望状态，定义路由转发规则
 spec:
+  #执行ingress控制器类型，这里使用nginx-ingress控制器
   ingressClassName: nginx
+  #路由规则列表，可配置多个域名host
   rules:
+    #访问域名，外部请求host头必须等于该名字才能匹配这条规则
     - host: lark.local
       http:
+        #路径匹配规则列表
         paths:
+          #匹配请求路径
           - path: /
+            # 路径匹配类型：Prefix前缀匹配，/ 代表匹配所有子路径
             pathType: Prefix
             backend:
+              #后端service名字,要和service一致
               service:
-                name: svc-lzt
+                name: svc-lark
+                # Service的port端口
                 port:
                   number: 8080
 
