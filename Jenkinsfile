@@ -45,11 +45,17 @@ pipeline {
                     # 先把仓库里的deployment.yaml传到master
                     ssh root@192.168.139.20 "mkdir -p /root/demo"
                     scp deployment.yml root@192.168.139.20:/root/demo/
+                    scp service.yml root@192.168.139.20:/root/demo/
+                    scp ingress.yml root@192.168.139.20:/root/demo/
+
+
                     #替换镜像tag并部署
                     ssh root@192.168.139.20 "
                         cd /root/demo &&
                         sed -i 's#image:.*#image: ${FULL_IMAGE}#' deployment.yml &&
                         kubectl apply -f deployment.yml
+                        kubectl apply -f service.yml
+                        kubectl apply -f ingress.yml
                     "
                 """
             }

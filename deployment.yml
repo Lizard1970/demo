@@ -1,58 +1,57 @@
+#api版本，Deployment在apps/v1组
 apiVersion: apps/v1
+#资源类型:Deployment，无状态应用控制器
 kind: Deployment
+#元数据:资源标识信息
 metadata:
+  #deployment资源名字，pod名字：deployment资源名字-随机串
   name: deployment-name
+  #所属命名空间，资源隔离
   namespace: demo-ns
+#期望值
 spec:
-  replicas: 4
+  #期望运行pod副本数量
+  replicas: 3
+  #标签选择器，Deployment通过标签匹配、管理它的pod
   selector:
+    #标签匹配规则，必须和pod模板里的labels完全一致(apps/v1强制)
     matchLabels:
+      #标签key:value，用来绑定控制器和pod
       app: demo-label
+  #pod模板:创建新pod的模板
   template:
+    #pod的元数据
     metadata:
+      #pod打上的标签，给selector匹配、service筛选用
       labels:
         app: demo-label
+    #pod的期望值运行规格
     spec:
+      #容器列表，一个pod内可以有多个容器
       containers:
+          #容器名字，在当前pod内唯一
         - name: contain-name
+          #镜像地址：私有harbor仓库地址/项目/镜像、版本号
           image: 192.168.139.30:5000/demo/test:v1
+          #容器监听端口，声明容器内部兼容端口，进文档标记，不做端口防火墙限制
           ports:
+          #容器内部端口
           - containerPort: 8080
+          #容器资源配额
+          resources:
+            #调度请求：节点至少要满足该资源才能调度Pod
+            requests:
+              #内存请求
+              memory: "512Mi"
+              #cpu请求，250m = 0.25核
+              cpu: "250m"
+            #资源上限值，最大不能超过该值，超额会被限流/驱逐
+            limits:
+              #内存上限，超出会OOM杀掉容器
+              memory: "1Gi"
+              #CPU上限，超出会被CPU限流
+              cpu: "500m"
+      #镜像拉取密钥(私有仓库harbor认证)
       imagePullSecrets:
         - name: harbor-secret
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: svc-lzt
-  namespace: demo-ns
-spec:
-  type: NodePort
-  selector:
-    app: demo-label
-  ports:
-    - port: 8080
-      targetPort: 8080
-      nodePort: 30081
-
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: ingress-demo
-  namespace: demo-ns
-spec:
-  ingressClassName: nginx
-  rules:
-  - host: lark.local
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: svc-lzt
-            port:
-              number: 8080
 
