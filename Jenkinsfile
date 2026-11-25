@@ -44,9 +44,9 @@ pipeline {
                 sh """
                     # 先把仓库里的deployment.yaml传到master
                     ssh root@192.168.139.20 "mkdir -p /root/demo"
-                    scp deployment.yml root@192.168.139.20:/root/demo/
-                    scp service.yml root@192.168.139.20:/root/demo/
-                    scp ingress.yml root@192.168.139.20:/root/demo/
+                    scp k8s/deployment.yml root@192.168.139.20:/root/demo/
+                    scp k8s/service.yml root@192.168.139.20:/root/demo/
+                    scp k8s/ingress.yml root@192.168.139.20:/root/demo/
 
 
                     #替换镜像tag并部署
