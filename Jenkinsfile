@@ -60,6 +60,7 @@ pipeline {
                         kubectl apply -f ingress.yml
                         kubectl apply -f configmap.yml
                         kubectl apply -f secret.yml
+
                     "
                 """
             }
