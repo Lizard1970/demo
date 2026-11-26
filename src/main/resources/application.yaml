@@ -1,11 +1,11 @@
 spring:
   application:
     name: demo
-    datasource:
-      driver-class-name: org.postgresql.Driver
-      url: ${DB_URL}
-      username: ${DB_USERNAME}
-      password: ${DB_PASSWORD}
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true # 下划线自动转驼峰，数据库user_type → userType
