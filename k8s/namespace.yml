@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Namespace
+#元数据
+metadata:
+  #ns名字，集群内唯一
+  name: demo-ns
+  #标签：程序可识别，用于筛选、监控、告警
+  labels:
+    #环境标识
+    env: prod
+    #归属业务名称
+    app: demo
+    #负责团队
+    team: dev
+    #注解，备注信息，k8s不做逻辑处理
+  annotations:
+    #负责人
+    owner: lizard
+    #用途说明
+    description: demo的业务生产环境命名空间
