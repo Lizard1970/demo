@@ -1,6 +1,6 @@
 #api版本，configMap归属v1 API组
 apiVersion: v1
-kind: configMap
+kind: ConfigMap
 metadata:
   #configMap资源名称，deployment里的envFrom引用这个名字
   name: demo-config
