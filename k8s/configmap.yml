@@ -8,6 +8,6 @@ metadata:
   namespace: demo-ns
 #data键值对，key就是环境变量，springBoot直接${key}读取
 data:
-  DB_URL: postgresql://192.168.130.2:5432/demo?useUnicode=true&characterEncoding=utf8
+  DB_URL: jdbc:postgresql://192.168.130.2:5432/demo?useUnicode=true&characterEncoding=utf8
   DB_USERNAME: postgres
   TOKEN_EXPRE_TIME: "72"
