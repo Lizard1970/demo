@@ -47,6 +47,8 @@ pipeline {
                     scp k8s/deployment.yml root@192.168.139.20:/root/demo/
                     scp k8s/service.yml root@192.168.139.20:/root/demo/
                     scp k8s/ingress.yml root@192.168.139.20:/root/demo/
+                    scp k8s/configmap.yml root@192.168.139.20:/root/demo/
+                    scp k8s/secret.yml root@192.168.139.20:/root/demo/
 
 
                     #替换镜像tag并部署
@@ -56,6 +58,8 @@ pipeline {
                         kubectl apply -f deployment.yml
                         kubectl apply -f service.yml
                         kubectl apply -f ingress.yml
+                        kubectl apply -f configmap.yml
+                        kubectl apply -f secret.yml
                     "
                 """
             }
