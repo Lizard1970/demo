@@ -37,6 +37,14 @@ spec:
           ports:
           #容器内部端口
           - containerPort: 8080
+          #批量注入环境
+          envFrom:
+            #从configMap读取全部配置，非敏感配置
+            -configMapRef:
+              name: demo-config
+            #从secret读取全部配置，敏感配置
+            -secretRef:
+              name: demo-secret
           #容器资源配额
           resources:
             #调度请求：节点至少要满足该资源才能调度Pod

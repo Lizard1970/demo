@@ -1,11 +1,11 @@
 spring:
   application:
     name: demo
-  datasource:
-    driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://192.168.130.2:5432/demo?useUnicode=true&characterEncoding=utf8
-    username: postgres
-    password:  123456
+    datasource:
+      driver-class-name: org.postgresql.Driver
+      url: ${DB_URL}
+      username: ${DB_USERNAME}
+      password: ${DB_PASSWORD}
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true # 下划线自动转驼峰，数据库user_type → userType
@@ -15,6 +15,6 @@ mybatis-plus:
 
 token:
   header: Authorization
-  secret: xpqsyUwn6CZz5FdCdCUpJIGSa0eUchnYXk8uLXrAF1MtzGYDxl7788LyLhM8mMZE
-  expireTime: 72 #单位分钟
+  secret: ${TOKEN_SECRET}
+  expireTime: ${TOKEN_EXPIRE_TIMS:72}  #72为默认值，环境变量不存在就用72
 

@@ -1,0 +1,13 @@
+#api版本，configMap归属v1 API组
+apiVersion: v1
+kind: configMap
+metadata:
+  #configMap资源名称，deployment里的envFrom引用这个名字
+  name: demo-config
+  #和deployment要保持在同一个明明空间
+  namespace: demo-ns
+#data键值对，key就是环境变量，springBoot直接${key}读取
+data:
+  DB_URL: postgresql://192.168.130.2:5432/demo?useUnicode=true&characterEncoding=utf8
+  DB_USERNAME: postgres
+  TOKEN_EXPRE_TIME: "72"
