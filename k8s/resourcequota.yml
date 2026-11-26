@@ -1,0 +1,23 @@
+#限制这个 ns 总 CPU、内存、Pod 数量，防止单个业务把集群资源打空
+# api版本，ResourceQuota归属核心v1 API组
+apiVersion: v1
+# 资源类型:ResourceQuota，命名空间全局资源配额，限制ns内所有Pod资源总和
+kind: ResourceQuota
+metadata:
+  # ResourceQuota资源名称，ns内唯一
+  name: demo-quota
+  # 配额生效的命名空间，和业务资源保持一致
+  namespace: demo-ns
+spec:
+  # hard：硬性上限，资源达到该阈值后，拒绝新Pod创建
+  hard:
+    # 整个ns下所有Pod的cpu requests总和上限：4核
+    requests.cpu: "2"
+    # 整个ns下所有Pod的内存 requests总和上限：8Gi
+    requests.memory: 4Gi
+    # 整个ns下所有Pod的cpu limits总和上限：8核
+    limits.cpu: "8"
+    # 整个ns下所有Pod的内存 limits总和上限：16Gi
+    limits.memory: 16Gi
+    # 这个命名空间最多允许同时存在20个Pod
+    pods: "20"
